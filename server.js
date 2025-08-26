@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // Your Zenbooker API key
-const ZENBOOKER_API_KEY = "zbk_F1mid92NdEtrMfFMFEL2c3Jg-Aox84TLiGomCqmlJKwV1PztMHNUIF6NK";
+const ZENBOOKER_API_KEY = "zbk_XgmptCLsUI4Gu9KteOVo0fRy-UB3QkymAL6sejKL9E557CepFMj34d621";
 
 // ✅ GHL Webhook endpoint
 app.post("/webhook/ghl", async (req, res) => {
@@ -99,4 +99,5 @@ app.post("/webhook/ghl", async (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
