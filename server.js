@@ -58,16 +58,20 @@ app.post("/webhook/ghl", async (req, res) => {
     const createJob = await axios.post(
       "https://api.zenbooker.com/v1/jobs",
       {
-        start_date: calendar.startTime,          // correct field
-        end_date: calendar.endTime,              // correct field
+        start_date: calendar.startTime, // ISO string, required
+        end_date: calendar.endTime,     // ISO string, required
         service_name: calendar.title || "Service Booking",
         timezone: timezone,
+        territory: location?.territoryId || "", // optional if you have
         service_address: {
-          line1: location?.fullAddress || "",
+          line1: location?.line1 || location?.fullAddress || "",
+          line2: location?.line2 || "",
           city: location?.city || "",
           state: location?.state || "",
           postal_code: location?.postalCode || "",
-          country: location?.country || "",
+          country: location?.country || "USA",
+          lat: location?.lat || null,
+          lng: location?.lng || null,
         },
         estimated_duration_seconds:
           (new Date(calendar.endTime) - new Date(calendar.startTime)) / 1000,
@@ -78,6 +82,7 @@ app.post("/webhook/ghl", async (req, res) => {
           phone: phone || "",
           email: email || "",
         },
+        invoice: { status: "draft" }, // optional but recommended
       },
       { headers: { Authorization: `Bearer ${ZENBOOKER_API_KEY}` } }
     );
