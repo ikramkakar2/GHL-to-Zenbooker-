@@ -7,7 +7,7 @@ app.use(express.json());
 // Your Zenbooker API key
 const ZENBOOKER_API_KEY = "zbk_z3srJyXoNOKsP1LT99TSJxK2-U3ibKHNRFzE2v8JKNZRNDkvsaSU2LhTt";
 
-// ✅ GHL Webhook endpoint (this is the URL you’ll paste in GHL webhook)
+// ✅ GHL Webhook endpoint
 app.post("/webhook/ghl", async (req, res) => {
   try {
     const data = req.body;
@@ -18,12 +18,12 @@ app.post("/webhook/ghl", async (req, res) => {
       last_name,
       email,
       phone,
-      timezone,
+      timezone = "America/Los_Angeles",
       calendar,
       location,
     } = data;
 
-    // STEP 1: Check if customer already exists in Zenbooker
+    // STEP 1: Check if customer exists
     let customer;
     try {
       const search = await axios.get(
@@ -42,28 +42,42 @@ app.post("/webhook/ghl", async (req, res) => {
       const createCustomer = await axios.post(
         "https://api.zenbooker.com/v1/customers",
         {
-          first_name,
-          last_name,
-          email,
-          phone,
-          timezone,
-          address: location?.fullAddress || "",
+          name: `${first_name} ${last_name}`,
+          phone: phone || "",
+          email: email || "",
+          accepts_sms: true,
+          accepts_email: true,
+          notes: [],
         },
         { headers: { Authorization: `Bearer ${ZENBOOKER_API_KEY}` } }
       );
       customer = createCustomer.data;
     }
 
-    // STEP 3: Create a Job (appointment) in Zenbooker
+    // STEP 3: Create a Job (appointment)
     const createJob = await axios.post(
       "https://api.zenbooker.com/v1/jobs",
       {
-        customer: customer.id,
-        title: calendar.title || `${first_name} ${last_name} Appointment`,
-        start_time: calendar.startTime,
-        end_time: calendar.endTime,
-        address: location?.fullAddress || "",
-        status: "booked",
+        start_date: calendar.startTime,          // correct field
+        end_date: calendar.endTime,              // correct field
+        service_name: calendar.title || "Service Booking",
+        timezone: timezone,
+        service_address: {
+          line1: location?.fullAddress || "",
+          city: location?.city || "",
+          state: location?.state || "",
+          postal_code: location?.postalCode || "",
+          country: location?.country || "",
+        },
+        estimated_duration_seconds:
+          (new Date(calendar.endTime) - new Date(calendar.startTime)) / 1000,
+        min_providers_required: 1,
+        status: "scheduled",
+        customer: {
+          name: `${first_name} ${last_name}`,
+          phone: phone || "",
+          email: email || "",
+        },
       },
       { headers: { Authorization: `Bearer ${ZENBOOKER_API_KEY}` } }
     );
